@@ -1,0 +1,103 @@
+############################
+# Build results
+############################
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]ny CPU/
+[Aa]nyCPU/
+[Ll]og/
+
+############################
+# Visual Studio
+############################
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+############################
+# Visual Studio Code
+############################
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+############################
+# Rider / IntelliJ
+############################
+.idea/
+*.iml
+
+############################
+# .NET tooling
+############################
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+############################
+# ASP.NET Core
+############################
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+############################
+# Entity Framework
+############################
+**/Migrations/*
+!**/Migrations/*.cs
+!**/Migrations/*Snapshot.cs
+
+############################
+# User secrets
+############################
+secrets.json
+
+############################
+# Test results
+############################
+TestResults/
+coverage/
+coverage.cobertura.xml
+*.trx
+
+############################
+# Docker / Containers
+############################
+docker-data/
+**/docker-data/
+**/*.env
+.env
+
+############################
+# OS
+############################
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+############################
+# Temporary files
+############################
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
