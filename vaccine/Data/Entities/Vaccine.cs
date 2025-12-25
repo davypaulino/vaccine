@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using vaccine.Data.Enums;
 
 namespace vaccine.Data.Entities;
@@ -30,9 +31,20 @@ public class Vaccine
     public Vaccine()
     {}
 
-public Vaccine(string name, EDoseType[] availableDoses)
+    public Vaccine(string name, EDoseType[] availableDoses)
     {
         Name = name;
+        foreach (var dose in availableDoses)
+        {
+            AvailableTypes |= dose;
+        }
+    }
+    
+    public void Update(string name, EDoseType[] availableDoses)
+    {
+        Name = name;
+        AvailableTypes = EDoseType.None;
+        UpdatedAt = DateTime.UtcNow;
         foreach (var dose in availableDoses)
         {
             AvailableTypes |= dose;

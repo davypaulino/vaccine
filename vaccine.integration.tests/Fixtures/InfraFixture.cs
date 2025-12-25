@@ -21,7 +21,7 @@ public class InfraFixture : IAsyncLifetime
     private async Task ApplyMigrationsAsync()
     {
         var options = new DbContextOptionsBuilder<VaccineDBContext>()
-            .UseNpgsql(Database.VaccineConnectionStringcx)
+            .UseNpgsql(Database.VaccineConnectionString)
             .Options;
 
         using var context = new VaccineDBContext(options);
