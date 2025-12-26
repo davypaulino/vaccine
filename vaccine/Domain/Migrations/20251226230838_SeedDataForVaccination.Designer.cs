@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using vaccine.Domain;
 
 #nullable disable
 
-namespace vaccine.Migrations
+namespace vaccine.Domain.Migrations
 {
     [DbContext(typeof(VaccineDbContext))]
-    partial class VaccineDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251226230838_SeedDataForVaccination")]
+    partial class SeedDataForVaccination
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,35 +115,6 @@ namespace vaccine.Migrations
                     b.HasIndex("VaccinationId");
 
                     b.ToTable("dose", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("306b5c29-77b7-4d28-b5df-08007d88a8d6"),
-                            AppliedAt = new DateTime(2024, 1, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(2024, 1, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            DoseType = (short)1,
-                            VaccinationId = new Guid("186ce810-ba7e-4ec1-84bd-094003988c3b")
-                        },
-                        new
-                        {
-                            Id = new Guid("8cc63d6b-ca5d-4136-8870-26dd0afd0ca0"),
-                            AppliedAt = new DateTime(2024, 2, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(2024, 2, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            DoseType = (short)2,
-                            VaccinationId = new Guid("186ce810-ba7e-4ec1-84bd-094003988c3b")
-                        },
-                        new
-                        {
-                            Id = new Guid("10df3852-b344-40d0-acb3-b88952419bef"),
-                            AppliedAt = new DateTime(2024, 3, 5, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(2024, 3, 5, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            DoseType = (short)1,
-                            VaccinationId = new Guid("501239da-1ccb-4540-bda4-2ccb4a89db9f")
-                        });
                 });
 
             modelBuilder.Entity("vaccine.Domain.Entities.Person", b =>

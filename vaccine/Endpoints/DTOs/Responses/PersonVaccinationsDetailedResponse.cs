@@ -13,7 +13,24 @@ public class VaccinationResponse
     public string VaccineName { get; set; } 
     public HashSet<DoseResponse> Doses { get; set; }
     public EDoseType AvailableDoses { get; set; }
-    public EDoseType DosesTaken { get; set; }
+    
+    public bool Equals(VaccinationResponse other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return VaccineName == other.VaccineName;
+    }
+
+    public override bool Equals(object obj)
+    {
+        return Equals(obj as VaccinationResponse);
+    }
+
+    public override int GetHashCode()
+    {
+        return VaccineName?.GetHashCode() ?? 0;
+    }
 }
 
 public class PersonVaccinationsDetailedResponse

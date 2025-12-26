@@ -223,34 +223,43 @@ public static class PersonEndpoints
         var vaccinations = await context.Vaccinations
             .AsNoTracking()
             .Where(v => v.PersonId == personId)
-            .Select(v => new KeyValuePair<string, VaccinationResponse>(
-                v.Vaccine.Name,
-                new VaccinationResponse
+            .Select(v => new VaccinationResponse
                 {
                     VaccineName = v.Vaccine.Name,
                     AvailableDoses = v.Vaccine.AvailableTypes,
-                    DosesTaken = v.Doses.Aggregate(EDoseType.None, (acc, d) => acc | d.DoseType),
                     Doses = v.Doses.Select(d => new DoseResponse
                     {
                         DoseType = d.DoseType,
                         AppliedAt = d.AppliedAt
                     }).ToHashSet()
                 }
-            ))
-            .ToDictionaryAsync(kvp => kvp.Key, kvp => kvp.Value, cancellationToken);
+            ).ToHashSetAsync(cancellationToken);
+
+        var noVaccinations = await context.Vaccines
+            .AsNoTracking()
+            .ToHashSetAsync(cancellationToken);
+
+        foreach (var v in  noVaccinations)
+        {
+            vaccinations.Add(
+                new VaccinationResponse
+                {
+                    VaccineName = v.Name,
+                    AvailableDoses = v.AvailableTypes,
+                    Doses = []
+                }
+            );
+        }
         
         var age = DateTime.UtcNow.Year - person.Birthday.Year;
         if (person.Birthday.Date > DateTime.UtcNow.AddYears(-age)) age--;
-        var vaccionationsSet = vaccinations
-            .Select((k, v) => k.Value)
-            .ToHashSet();
         
         var response = new PersonVaccinationsDetailedResponse
         {
             Name = person.Name,
             Document = person.Document.Number,
             Age = age,
-            Vaccinations = vaccionationsSet,
+            Vaccinations =vaccinations,
         };
 
         return Results.Ok(response);
