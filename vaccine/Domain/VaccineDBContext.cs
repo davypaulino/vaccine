@@ -10,6 +10,9 @@ public class VaccineDbContext(DbContextOptions<VaccineDbContext> options) : DbCo
     public virtual DbSet<User> Users { get; set; }
     
     public virtual DbSet<Person> Persons { get; set; }
+    public virtual DbSet<Vaccination> Vaccinations { get; set; }
+    public virtual DbSet<Dose> Doses { get; set; }
+    
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         => modelBuilder.ApplyConfigurationsFromAssembly(typeof(VaccineDbContext).Assembly);

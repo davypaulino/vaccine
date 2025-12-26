@@ -5,6 +5,15 @@ namespace vaccine.Domain.Entities;
 
 public class Person : BaseEntity
 {
+    public Person() : base() { }
+
+    public Person(string name, Cpf document, DateTime birthDate) : base()
+    {
+        Name = name;
+        Document = document;
+        Birthday = birthDate;
+    }
+    
     public string Name { get; set; }
     public Guid? UserId { get; set; }
     public Cpf Document { get; set; }

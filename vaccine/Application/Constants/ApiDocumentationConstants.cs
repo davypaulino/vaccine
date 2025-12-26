@@ -34,10 +34,23 @@ public static class ApiDocumentationConstants
                       """
     };
     
+    public static OpenApiTag PersonTag = new OpenApiTag()
+    {
+        Name = "APIs | 4) Pessoal",
+        Description = """
+                      Esta seção tem como objetivo agrupar todas as ações
+                      relacionadas ao gerenciamento de pessoas no sistema,
+                      incluindo operações de criação, edição, exclusão
+                      e listagem paginada de pessoas, bem como a consulta
+                      das vacinações associadas a uma pessoa específica.
+                      """
+    };
+    
     public static OpenApiTag[] Tags =
     [
         UserTag,
         ManagerVaccineTag,
-        VaccinationTag
+        VaccinationTag,
+        PersonTag
     ];
 }
