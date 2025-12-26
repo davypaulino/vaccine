@@ -1,10 +1,3 @@
-Claro 👍
-Abaixo está uma **documentação consolidada, organizada e profissional**, **baseada exatamente no conteúdo que você já escreveu**, apenas melhorando **clareza, estrutura e padronização**, sem mudar a essência do projeto.
-
-Você pode usar isso **diretamente como `README.md`**.
-
----
-
 # 💉 Vaccine
 
 Projeto de **sistema de vacinação**, desenvolvido com foco em **evolução arquitetural**, **boas práticas** e **separação de responsabilidades**.
