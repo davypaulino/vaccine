@@ -1,7 +1,9 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using vaccine.Application.Filters;
 using vaccine.Application.Middlewares;
 using vaccine.Application.Services;
 using vaccine.Domain;
@@ -66,10 +68,16 @@ public static class ApplicationServicesConfiguration
         return builder;
     }
 
+    public static TBuilder AddAuthorization<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services.AddAuthorization();
+        return builder;
+    }
+
     public static TBuilder AddAuthentication<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         var jwtSettings = builder.Configuration.GetSection(nameof(AuthenticationSettings)).Get<AuthenticationSettings>();
-        
+
         builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

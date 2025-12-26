@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection(nameof(AuthenticationSettings)));
 
 builder.AddAuthentication();
-builder.Services.AddAuthorization();
+builder.AddAuthorization();
 builder.AddServicesSettings();
 builder.AddMiddlewares();
 builder.AddDatabaseService();
@@ -36,8 +36,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.MapVaccineEndpoints();
+app.MapUserEndpoints();
 
 await app.RunAsync();
 

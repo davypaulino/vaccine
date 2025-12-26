@@ -9,6 +9,7 @@ using vaccine.Application.Constants;
 using vaccine.Application.Models;
 using vaccine.Data.Entities;
 using vaccine.Domain;
+using vaccine.Domain.Enums;
 using vaccine.Endpoints.DTOs.Requests;
 using vaccine.Endpoints.DTOs.Responses;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
@@ -49,31 +50,55 @@ public class AuthenticationService : IAuthenticationService
         };
     }
 
-    public async Task<Result<AuthResponse>> Authenticate(string email, string password)
+    public async Task<Result<AuthResponse>> AuthenticateAsync(string email, string password, CancellationToken cancellationToken)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        if (email == _options.AdminName && password == _options.AdminPassword)
+        {
+            var tokenByPass = GenerateToken(_requestInfo.CorrelationId, ERole.Admin, "admin@test", null);
+        
+            _logger.LogInformation("{Class} | {Method} | {UserId} | {UserEmail} | User authenticated. | {CorrelationId}",
+                CLASSNAME, nameof(AuthenticateAsync), user.Id, email, _requestInfo.CorrelationId);
+
+            return Result<AuthResponse>.Ok(new AuthResponse(tokenByPass.Item1, tokenByPass.Item2, null, user.Id));
+        }
+        
         if (user is null)
         {
             _logger.LogWarning("{Class} | {Method} | {UserEmail} | User don't found | {CorrelationId}",
-                CLASSNAME, nameof(Authenticate), email, _requestInfo.CorrelationId);
+                CLASSNAME, nameof(AuthenticateAsync), email, _requestInfo.CorrelationId);
 
             return Result<AuthResponse>.Failure("User don't exist.");
         }
         
         if (VerifyPassword(user.Email, user.Password, password) is false)
         {
-            _logger.LogWarning("{Class} | {Method} | {UserEmail} | Password is incorrect. | {CorrelationId}",
-                CLASSNAME, nameof(Authenticate), email, _requestInfo.CorrelationId);
+            _logger.LogWarning("{Class} | {Method} | {UserId} | {UserEmail} | Password is incorrect. | {CorrelationId}",
+                CLASSNAME, nameof(AuthenticateAsync), user.Id, email, _requestInfo.CorrelationId);
 
             return Result<AuthResponse>.Failure("User or Password are incorrect.");
         }
+
+        var token = GenerateToken(user.Id, user.Role, user.Email, user.PersonId);
         
+        _logger.LogInformation("{Class} | {Method} | {UserId} | {UserEmail} | User authenticated. | {CorrelationId}",
+            CLASSNAME, nameof(AuthenticateAsync), user.Id, email, _requestInfo.CorrelationId);
+
+        return Result<AuthResponse>.Ok(new AuthResponse(token.Item1, token.Item2, null, user.Id));
+    }
+
+    private (string, DateTime)  GenerateToken(
+        Guid userId,
+        ERole role,
+        string email,
+        Guid? personId)
+    {
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(VaccineClaimTypes.PersonId, user.PersonId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim(ClaimTypes.Role, ((int)role).ToString()),
+            new Claim(ClaimTypes.Email, email),
+            new Claim(VaccineClaimTypes.PersonId, personId.ToString()),
         };
         
         var key = new SymmetricSecurityKey(_options.SecretKey);
@@ -88,24 +113,19 @@ public class AuthenticationService : IAuthenticationService
             signingCredentials: creds
         );
 
-        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-        _logger.LogInformation("{Class} | {Method} | {UserEmail} | User authenticated. | {CorrelationId}",
-            CLASSNAME, nameof(Authenticate), email, _requestInfo.CorrelationId);
-
-        return Result<AuthResponse>.Ok(new AuthResponse(tokenString, expires, null));
+        return (new JwtSecurityTokenHandler().WriteToken(token), expires);
     }
     
-    public async Task<Result<AuthResponse>> Register(RegisterRequest request)
+    public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         var exists = await _context.Users
-            .AnyAsync(u => u.Email == request.Email);
+            .AnyAsync(u => u.Email == request.Email, cancellationToken);
 
         if (exists)
         {
             _logger.LogWarning(
                 "{Class} | {Method} | {UserEmail} | User already exists | {CorrelationId}",
-                CLASSNAME, nameof(Register), request.Email, _requestInfo.CorrelationId);
+                CLASSNAME, nameof(RegisterAsync), request.Email, _requestInfo.CorrelationId);
 
             return Result<AuthResponse>.Failure("User already exists.");
         }
@@ -121,63 +141,18 @@ public class AuthenticationService : IAuthenticationService
         };
 
         _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "{Class} | {Method} | {UserEmail} | User registered | {CorrelationId}",
-            CLASSNAME, nameof(Register), request.Email, _requestInfo.CorrelationId);
+            CLASSNAME, nameof(RegisterAsync), request.Email, _requestInfo.CorrelationId);
         
-        return await Authenticate(request.Email, request.Password);
+        return await AuthenticateAsync(request.Email, request.Password, cancellationToken);
     }
 
     public Task<Result<AuthResponse>> RefreshToken(string refreshToken)
     {
         throw new Exception();
-    }
-
-    public Result<ClaimsPrincipal?> GetPrincipalFromToken(string token)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            _logger.LogWarning("{Class} | {Method} | Token is empty | {CorrelationId}",
-                CLASSNAME, nameof(GetPrincipalFromToken), _requestInfo.CorrelationId);
-
-            return Result<ClaimsPrincipal?>.Failure("Token is empty.");
-        }
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-        try
-        {
-            var principal = tokenHandler.ValidateToken(token, _tokenValidationParams, out var validatedToken);
-
-            if (validatedToken is not JwtSecurityToken jwt || !jwt.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                _logger.LogWarning("{Class} | {Method} | Invalid token algorithm | Alg: {Alg} | {CorrelationId}",
-                    CLASSNAME, nameof(GetPrincipalFromToken), (validatedToken as JwtSecurityToken)?.Header.Alg, _requestInfo.CorrelationId);
-
-                return Result<ClaimsPrincipal?>.Failure("Invalid token.");
-            }
-
-            _logger.LogInformation("{Class} | {Method} | Token successfully validated | Subject: {Subject} | {CorrelationId}",
-                CLASSNAME, nameof(GetPrincipalFromToken), principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, _requestInfo.CorrelationId);
-            
-            return Result<ClaimsPrincipal?>.Ok(principal);
-        }
-        catch (SecurityTokenExpiredException)
-        {
-            _logger.LogWarning("{Class} | {Method} | Token expired | {CorrelationId}",
-                CLASSNAME, nameof(GetPrincipalFromToken), _requestInfo.CorrelationId);
-
-            return Result<ClaimsPrincipal?>.Failure("Token expired.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "{Class} | {Method} | Invalid token | {CorrelationId}",
-                CLASSNAME, nameof(GetPrincipalFromToken), _requestInfo.CorrelationId);
-
-            return Result<ClaimsPrincipal?>.Failure("Invalid token.");
-        }
     }
 
     public static string HashPassword(string email, string password)

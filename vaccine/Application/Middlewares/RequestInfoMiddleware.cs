@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using vaccine.Application.Configurations;
 
 namespace vaccine.Application.Middlewares;
@@ -21,7 +22,19 @@ public class RequestInfoMiddleware : IMiddleware
         var port = context.Request.Host.Port?.ToString();
 
         Guid.TryParse(context.Request.Headers["X-Correlation-Id"].FirstOrDefault(), out var correlationId);
-        
+
+        if (context.User?.Identity?.IsAuthenticated == true)
+        {
+            var user = context.User;
+
+            string? userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            string? userName = user.FindFirst(ClaimTypes.Name)?.Value;
+            string? email = user.FindFirst(ClaimTypes.Email)?.Value;
+            string? role = user.FindFirst(ClaimTypes.Role)?.Value;
+
+            requestInfo.SetUserInfo(userId, userName, email, role);
+        }
+
         requestInfo.SetIP(ip);
         requestInfo.SetPort(port);
         requestInfo.SetCorrelationId(correlationId);

@@ -27,24 +27,29 @@ public static class VaccineEndpoints
             .MapGroup($"/api/v{apiVersion}/vaccines")
             .WithTags(_tags)
             .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
-            .WithOrder(10);
+            .WithOrder(11)
+            .RequireAuthorization()
+            .AddEndpointFilter<AuthorizationAttributeHandler>();
 
         group.MapPost("/", CreateVaccine)
             .AddEndpointFilter<ValidationFilter<CreateVaccineRequest>>()
             .Produces<CreateVaccineResponse>(StatusCodes.Status201Created)
+            .WithMetadata(new AuthorizationAttributeAnnotation(ERole.Admin | ERole.Editor))
             .WithSummary("Adiciona Vacina")
             .WithDescription($"""
                               **Responsável por adicionar nova vacina:**
                               {Environment.NewLine}Opções para doses:
                               {EnumDescriptionHelper.GetEnumDescription<EDoseType>()}
                               """);
-
-
+        
         group.MapPut("/{vaccineId}", ModifyVaccine)
             .AddEndpointFilter<ValidationFilter<ModifyVaccineRequest>>()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
+            .WithMetadata(new AuthorizationAttributeAnnotation(ERole.Admin | ERole.Editor))
             .WithSummary("Modificar Vacina")
             .WithDescription($"""
                               **Responsável por modificar:**

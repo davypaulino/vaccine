@@ -82,7 +82,7 @@ public class AuthenticationServiceTests
     {
         var service = CreateService(new List<User>());
 
-        var result = await service.Authenticate("test@email.com", "123");
+        var result = await service.AuthenticateAsync("test@email.com", "123");
 
         Assert.False(result.Success);
         Assert.Equal("User don't exist.", result.Error);
@@ -103,7 +103,7 @@ public class AuthenticationServiceTests
 
         var service = CreateService(new List<User> { user });
 
-        var result = await service.Authenticate(user.Email, "wrong-password");
+        var result = await service.AuthenticateAsync(user.Email, "wrong-password");
 
         Assert.False(result.Success);
         Assert.Equal("User or Password are incorrect.", result.Error);
@@ -126,7 +126,7 @@ public class AuthenticationServiceTests
 
         var service = CreateService(new List<User> { user });
 
-        var result = await service.Authenticate(user.Email, pass);
+        var result = await service.AuthenticateAsync(user.Email, pass);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
@@ -164,7 +164,7 @@ public class AuthenticationServiceTests
         var service = CreateService(new List<User> { user });
 
         var before = DateTime.UtcNow;
-        var result = await service.Authenticate(email, pass);
+        var result = await service.AuthenticateAsync(email, pass);
         var after = DateTime.UtcNow;
 
         var handler = new JwtSecurityTokenHandler();
@@ -200,7 +200,7 @@ public class AuthenticationServiceTests
             EStatus.Active
         );
 
-        var result = await service.Register(request);
+        var result = await service.RegisterAsync(request);
 
         Assert.False(result.Success);
         Assert.Equal("User already exists.", result.Error);
@@ -217,7 +217,7 @@ public class AuthenticationServiceTests
             ERole.Person,
             EStatus.Active);
 
-        var result = await service.Register(request);
+        var result = await service.RegisterAsync(request);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
@@ -239,7 +239,7 @@ public class AuthenticationServiceTests
             EStatus.Active
         );
 
-        await service.Register(request);
+        await service.RegisterAsync(request);
 
         var user = _contextMock.Users.First(u => u.Email == request.Email);
 
@@ -251,101 +251,5 @@ public class AuthenticationServiceTests
                 "123456"
             )
         );
-    }
-    
-    [Fact]
-    public void GetPrincipalFromToken_WhenTokenIsEmpty_ShouldFail()
-    {
-        var service = CreateService(new List<User>());
-
-        var result = service.GetPrincipalFromToken(string.Empty);
-
-        Assert.False(result.Success);
-        Assert.Null(result.Data);
-        Assert.Equal("Token is empty.", result.Error);
-    }
-    
-    [Fact]
-    public void GetPrincipalFromToken_WhenTokenIsInvalid_ShouldFail()
-    {
-        var service = CreateService(new List<User>());
-
-        var result = service.GetPrincipalFromToken("this-is-not-a-jwt");
-
-        Assert.False(result.Success);
-        Assert.Null(result.Data);
-        Assert.Equal("Invalid token.", result.Error);
-    }
-
-    [Fact]
-    public void GetPrincipalFromToken_WhenTokenIsExpired_ShouldFail()
-    {
-        var service = CreateService(new List<User>());
-
-        var token = GenerateToken(
-            claims: new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString())
-            },
-            expires: DateTime.UtcNow.AddMinutes(-5)
-        );
-
-        var result = service.GetPrincipalFromToken(token);
-
-        Assert.False(result.Success);
-        Assert.Null(result.Data);
-        Assert.Equal("Token expired.", result.Error);
-    }
-    
-    [Fact]
-    public void GetPrincipalFromToken_WhenAlgorithmIsNotHs256_ShouldFail()
-    {
-        var service = CreateService(new List<User>());
-
-        var token = GenerateToken(
-            claims: new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString())
-            },
-            expires: DateTime.UtcNow.AddMinutes(10),
-            algorithm: SecurityAlgorithms.HmacSha256Signature
-        );
-
-        var result = service.GetPrincipalFromToken(token);
-
-        Assert.False(result.Success);
-        Assert.Null(result.Data);
-        Assert.Equal("Invalid token.", result.Error);
-    }
-    
-    [Fact]
-    public void GetPrincipalFromToken_WhenTokenIsValid_ShouldReturnPrincipal()
-    {
-        var service = CreateService(new List<User>());
-
-        var userId = Guid.NewGuid();
-        var email = "valid@test.com";
-        var personId = Guid.NewGuid();
-
-        var token = GenerateToken(
-            claims: new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-                new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, ERole.Person.ToString()),
-            },
-            expires: DateTime.UtcNow.AddMinutes(10)
-        );
-
-        var result = service.GetPrincipalFromToken(token);
-
-        Assert.True(result.Success);
-        Assert.NotNull(result.Data);
-
-        var claims = result.Data!.Claims.ToDictionary(c => c.Type, c => c.Value);
-
-        Assert.Equal(userId.ToString(), claims[ClaimTypes.NameIdentifier]);
-        Assert.Equal(email, claims[ClaimTypes.Email]);
-        Assert.Equal(ERole.Person.ToString(), claims[ClaimTypes.Role]);
     }
 }

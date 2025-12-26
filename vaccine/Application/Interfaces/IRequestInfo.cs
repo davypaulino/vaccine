@@ -1,3 +1,5 @@
+using vaccine.Domain.Enums;
+
 namespace vaccine.Application.Configurations;
 
 public interface IRequestInfo
@@ -7,6 +9,8 @@ public interface IRequestInfo
     string? Name { get; }
 
     string? EmailAddress { get; }
+    
+    ERole? Role { get; }
 
     string? IP { get; }
 
@@ -14,10 +18,11 @@ public interface IRequestInfo
 
     Guid CorrelationId { get; }
 
-    void SetUserInfo(
-        Guid? userId,
+    public void SetUserInfo(
+        string? userId,
         string? name,
-        string? email);
+        string? email,
+        string role);
 
     void SetIP(string ip);
 

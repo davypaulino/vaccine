@@ -1,12 +1,16 @@
+using vaccine.Domain.Enums;
+
 namespace vaccine.Application.Configurations;
 
 public class RequestInfo : IRequestInfo
 {
-    public Guid? UserId { get; set;  }
+    public Guid? UserId { get; set;  } = Guid.NewGuid();
 
-    public string? Name { get; set;  }
+    public string? Name { get; set; } = null!;
 
-    public string? EmailAddress { get; set;  }
+    public string? EmailAddress { get; set;  } = null!;
+    
+    public ERole? Role { get; set;  } = null!;
 
     public string? IP { get; set;  }
 
@@ -15,11 +19,25 @@ public class RequestInfo : IRequestInfo
     public Guid CorrelationId { get; set; }
 
     public void SetUserInfo(
-        Guid? userId,
+        string? userId,
         string? name,
-        string? email)
+        string? email,
+        string role)
     {
+        Name = name;
+        EmailAddress = email;
+        Guid.TryParse(userId, out var user);
+        UserId = user;
         
+        if (!string.IsNullOrWhiteSpace(role) &&
+            int.TryParse(role, out var roleValue))
+        {
+            Role = (ERole)roleValue;
+        }
+        else
+        {
+            Role = null;
+        }
     }
 
     public void SetIP(string ip)
