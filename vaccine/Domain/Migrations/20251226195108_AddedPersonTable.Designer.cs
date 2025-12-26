@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using vaccine.Domain;
 
 #nullable disable
 
-namespace vaccine.Migrations
+namespace vaccine.Domain.Migrations
 {
     [DbContext(typeof(VaccineDbContext))]
-    partial class VaccineDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251226195108_AddedPersonTable")]
+    partial class AddedPersonTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,7 +82,7 @@ namespace vaccine.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("Birthday")
+                    b.Property<DateTime?>("Birthday")
                         .HasColumnType("date")
                         .HasColumnName("birthday");
 
@@ -124,53 +127,6 @@ namespace vaccine.Migrations
                         .IsUnique();
 
                     b.ToTable("person", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("8cf44a3d-1700-4167-ab56-66a65c5817ba"),
-                            Birthday = new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(1990, 1, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Document = "99711606097",
-                            Name = "Eduarda Marino"
-                        },
-                        new
-                        {
-                            Id = new Guid("dfc67e0d-3ac4-4b81-8ec4-8ec90da29546"),
-                            Birthday = new DateTime(1985, 5, 20, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(1985, 5, 20, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Document = "06693964001",
-                            Name = "João Silva"
-                        },
-                        new
-                        {
-                            Id = new Guid("46bdd486-3de7-4977-af3a-200a7ba02773"),
-                            Birthday = new DateTime(1992, 8, 15, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(1992, 8, 15, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Document = "02443959007",
-                            Name = "Maria Oliveira"
-                        },
-                        new
-                        {
-                            Id = new Guid("8ce58e9d-81b3-4aa3-a097-396b46175865"),
-                            Birthday = new DateTime(1988, 3, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(1988, 3, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Document = "75251000049",
-                            Name = "Carlos Pereira"
-                        },
-                        new
-                        {
-                            Id = new Guid("322c1393-bd8e-4fb6-b074-b8764a16d317"),
-                            Birthday = new DateTime(1995, 11, 10, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedAt = new DateTime(1995, 11, 3, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Document = "09712058093",
-                            Name = "Ana Costa"
-                        });
                 });
 
             modelBuilder.Entity("vaccine.Domain.Entities.Vaccine", b =>
@@ -209,48 +165,6 @@ namespace vaccine.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("vaccine", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("74c6d6e2-f3ad-4ea8-97ec-6fa900425519"),
-                            AvailableTypes = (short)7,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Name = "Hepatite B"
-                        },
-                        new
-                        {
-                            Id = new Guid("7def8280-c204-49ce-b04c-e3631a9e414f"),
-                            AvailableTypes = (short)27,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Name = "COVID-19"
-                        },
-                        new
-                        {
-                            Id = new Guid("63f8f8de-1772-4220-ab07-d00f3748a4c9"),
-                            AvailableTypes = (short)1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Name = "Influenza (Gripe)"
-                        },
-                        new
-                        {
-                            Id = new Guid("05df7267-b874-42b2-944d-7c04c100d85e"),
-                            AvailableTypes = (short)1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Name = "Febre Amarela"
-                        },
-                        new
-                        {
-                            Id = new Guid("45e171d4-e07a-42c9-973d-68d947b86b9f"),
-                            AvailableTypes = (short)3,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CreatedBy = new Guid("efbc569d-c8ad-463a-9158-27cdb8d8630a"),
-                            Name = "Tríplice Viral (Sarampo, Caxumba, Rubéola)"
-                        });
                 });
 
             modelBuilder.Entity("vaccine.Domain.Entities.Person", b =>

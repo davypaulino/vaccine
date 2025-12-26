@@ -12,8 +12,10 @@ using vaccine.Application.Services;
 using vaccine.Data;
 using vaccine.Data.Entities;
 using vaccine.Domain;
+using vaccine.Domain.Entities;
 using vaccine.Domain.Enums;
 using vaccine.Endpoints.DTOs.Requests;
+using vaccine.Endpoints.DTOs.Validators;
 
 namespace vaccine.unit.tests.Services;
 
@@ -23,6 +25,8 @@ public class AuthenticationServiceTests
     private readonly Mock<ILogger<AuthenticationService>> _loggerMock;
     private readonly Mock<IRequestInfo> _requestInfoMock;
     private readonly IOptions<AuthenticationSettings> _options;
+
+    private readonly Cpf PersonDefaultCpf = new Cpf("57133094010"); 
 
     public AuthenticationServiceTests()
     {
@@ -65,7 +69,19 @@ public class AuthenticationServiceTests
 
     private AuthenticationService CreateService(List<User> users)
     {
+        var persons = new List<Person>()
+        {
+            new()
+            {
+                Name = "Person test", Document = PersonDefaultCpf,
+                Birthday = new DateTime(1985, 5, 20, 0, 0, 0, DateTimeKind.Utc),
+                CreatedAt = new DateTime(1985, 5, 20, 0, 0, 0, DateTimeKind.Utc), CreatedBy = Guid.NewGuid()
+            }
+        };
+        
         _contextMock.Users.RemoveRange(_contextMock.Users);
+        _contextMock.Persons.RemoveRange(_contextMock.Persons);
+        _contextMock.Persons.AddRange(persons);
         _contextMock.Users.AddRange(users);
         _contextMock.SaveChanges();
 
@@ -121,7 +137,6 @@ public class AuthenticationServiceTests
             Password = AuthenticationService.HashPassword(email, pass),
             Role = ERole.Person,
             Status = EStatus.Active,
-            PersonId = Guid.NewGuid()
         };
 
         var service = CreateService(new List<User> { user });
@@ -158,7 +173,6 @@ public class AuthenticationServiceTests
             Password = AuthenticationService.HashPassword(email, pass),
             Role = ERole.Person,
             Status = EStatus.Active,
-            PersonId = Guid.NewGuid()
         };
 
         var service = CreateService(new List<User> { user });
@@ -180,7 +194,7 @@ public class AuthenticationServiceTests
     public async Task Register_WhenUserAlreadyExists_ShouldReturnError()
     {
         var email = "test@email.com";
-        var pass = "123456";
+        var pass = "olhaR123$09991";
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -188,17 +202,13 @@ public class AuthenticationServiceTests
             Password = AuthenticationService.HashPassword(email, pass),
             Role = ERole.Admin,
             Status = EStatus.Active,
-            PersonId = Guid.NewGuid()
         };
         
         var service = CreateService(new List<User> { user });
 
         var request = new RegisterRequest(email,
             pass,
-            null,
-            ERole.Person,
-            EStatus.Active
-        );
+            PersonDefaultCpf.Number);
 
         var result = await service.RegisterAsync(request, CancellationToken.None);
 
@@ -210,12 +220,12 @@ public class AuthenticationServiceTests
     public async Task Register_WithValidData_ShouldCreateUserAndAuthenticate()
     {
         var service = CreateService(new List<User>());
-
-        var request = new RegisterRequest("new@email.com",
-            "123456",
-            null,
-            ERole.Person,
-            EStatus.Active);
+        var email = "test@email.com";
+        var pass = "olhaR123$09991";
+        
+        var request = new RegisterRequest(email,
+            pass,
+            PersonDefaultCpf.Number);
 
         var result = await service.RegisterAsync(request, CancellationToken.None);
 
@@ -230,25 +240,23 @@ public class AuthenticationServiceTests
     public async Task Register_WithValidData_ShouldStoreHashedPassword()
     {
         var service = CreateService(new List<User>());
-
-        var request = new RegisterRequest(
-            "hash@test.com",
-            "123456",
-            null,
-            ERole.Person,
-            EStatus.Active
-        );
+        var email = "test@email.com";
+        var pass = "olhaR123$09991";
+        
+        var request = new RegisterRequest(email,
+            pass,
+            PersonDefaultCpf.Number);
 
         await service.RegisterAsync(request, CancellationToken.None);
 
         var user = _contextMock.Users.First(u => u.Email == request.Email);
 
-        Assert.NotEqual("123456", user.Password);
+        Assert.NotEqual(pass, user.Password);
         Assert.True(
             AuthenticationService.VerifyPassword(
                 user.Email,
                 user.Password,
-                "123456"
+                pass
             )
         );
     }

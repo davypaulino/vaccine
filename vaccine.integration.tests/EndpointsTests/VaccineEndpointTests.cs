@@ -158,7 +158,7 @@ public class VaccineEndpointTests
     public async Task PutVaccine_WithValidRequest_ShouldUpdateVaccine()
     {
         // Arrange
-        
+        await CleanDatabase(CancellationToken.None);
         const string expectedName = "COVID-19 Updated";
         using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<VaccineDbContext>();
@@ -272,5 +272,15 @@ public class VaccineEndpointTests
 
         Assert.NotNull(problem);
         Assert.True(problem!.Errors.ContainsKey("AvailableDoses"));
+    }
+
+    private async Task CleanDatabase(CancellationToken cancellationToken)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<VaccineDbContext>();
+        context.Vaccines.RemoveRange(context.Vaccines!);
+        context.Persons.RemoveRange(context.Persons!);
+        context.Users.RemoveRange(context.Users!);
+        await context.SaveChangesAsync(cancellationToken);
     }
 }

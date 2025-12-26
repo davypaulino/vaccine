@@ -1,5 +1,6 @@
 using vaccine.Application.Configurations;
 using vaccine.Application.Constants;
+using vaccine.Application.Filters;
 using vaccine.Endpoints.DTOs.Requests;
 using vaccine.Endpoints.DTOs.Responses;
 
@@ -28,6 +29,7 @@ public static class UserEndpoints
         group.MapPost("/register", RegisterUser)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .Produces<RegisterRequest>(StatusCodes.Status201Created)
+            .AddEndpointFilter<ValidationFilter<RegisterRequest>>()
             .WithSummary("Registar um novo utilizador")
             .WithDescription("""
                              Cria um novo utilizador no sistema.
@@ -45,6 +47,7 @@ public static class UserEndpoints
         group.MapPost("/authenticate", AuthenticateUser)
             .ProducesValidationProblem()
             .Produces<AuthResponse>(StatusCodes.Status200OK)
+            .AddEndpointFilter<ValidationFilter<AuthenticateRequest>>()
             .WithSummary("Autenticar utilizador")
             .WithDescription("""
                              Autentica um utilizador no sistema através de credenciais válidas.
@@ -102,7 +105,7 @@ public static class UserEndpoints
             type: ProblemDetailTypes.BadRequest,
             title: "Fail to register User",
             detail: response.Error,
-            statusCode: StatusCodes.Status404NotFound,
+            statusCode: StatusCodes.Status400BadRequest,
             extensions: new Dictionary<string, object?>
             {
                 ["correlationId"] = requestInfo.CorrelationId

@@ -10,10 +10,6 @@ public class UserMap : BaseEntityMap<User>
     public override void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("user");
-
-        builder.Property(u => u.PersonId)
-            .HasColumnName("person_id")
-            .HasColumnType("uuid");
         
         builder.Property(u => u.Email)
             .HasColumnName("email")
@@ -42,6 +38,9 @@ public class UserMap : BaseEntityMap<User>
                 u => (int)u,
                 u => (EStatus)u
             );
+        
+        builder.HasIndex(u => u.Email)
+            .IsUnique();
         
         base.Configure(builder);
     }

@@ -23,9 +23,21 @@ public static class ApiDocumentationConstants
                       """
     };
     
+    public static OpenApiTag VaccinationTag = new OpenApiTag()
+    {
+        Name = "APIs | 3) Vacinação",
+        Description = """
+                      Esta seção agrupa todos os endpoints responsáveis
+                      pelo gerenciamento de vacinas aplicadas no sistema,
+                      incluindo as operações de criação, modificação e exclusão
+                      de registros de vacinação.
+                      """
+    };
+    
     public static OpenApiTag[] Tags =
     [
         UserTag,
         ManagerVaccineTag,
+        VaccinationTag
     ];
 }

@@ -36,8 +36,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.MapVaccineEndpoints();
 app.MapUserEndpoints();
+app.MapvaccinationEndpoints();
 
 await app.RunAsync();
 

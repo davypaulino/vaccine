@@ -12,6 +12,7 @@ using vaccine.Domain;
 using vaccine.Domain.Enums;
 using vaccine.Endpoints.DTOs.Requests;
 using vaccine.Endpoints.DTOs.Responses;
+using vaccine.Endpoints.DTOs.Validators;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace vaccine.Application.Services;
@@ -52,7 +53,6 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<Result<AuthResponse>> AuthenticateAsync(string email, string password, CancellationToken cancellationToken)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         if (email == _options.AdminName && password == _options.AdminPassword)
         {
             var adminEmail = "admin@email.com";
@@ -63,6 +63,10 @@ public class AuthenticationService : IAuthenticationService
 
             return Result<AuthResponse>.Ok(new AuthResponse(tokenByPass.Item1, tokenByPass.Item2, null, _requestInfo.CorrelationId));
         }
+        
+        var user = await _context.Users
+            .Include(u => u.Person)
+            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         
         if (user is null)
         {
@@ -80,7 +84,7 @@ public class AuthenticationService : IAuthenticationService
             return Result<AuthResponse>.Failure("User or Password are incorrect.");
         }
 
-        var token = GenerateToken(user.Id, user.Role, user.Email, user.PersonId);
+        var token = GenerateToken(user.Id, user.Role, user.Email, user.Person?.Id);
         
         _logger.LogInformation("{Class} | {Method} | {UserId} | {UserEmail} | User authenticated. | {CorrelationId}",
             CLASSNAME, nameof(AuthenticateAsync), user.Id, email, _requestInfo.CorrelationId);
@@ -99,8 +103,10 @@ public class AuthenticationService : IAuthenticationService
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(ClaimTypes.Role, ((int)role).ToString()),
             new Claim(ClaimTypes.Email, email),
-            new Claim(VaccineClaimTypes.PersonId, personId.ToString()),
         };
+
+        if (personId is not null)
+            claims.Append(new Claim(VaccineClaimTypes.PersonId, personId.ToString()));
         
         var key = new SymmetricSecurityKey(_options.SecretKey);
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -119,7 +125,21 @@ public class AuthenticationService : IAuthenticationService
     
     public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
+        var cpf = new Cpf(request.Document);
+        var person = await _context.Persons
+            .FirstOrDefaultAsync(p => p.Document == cpf, cancellationToken);
+        
+        if (person is null)
+        {
+            _logger.LogWarning(
+                "{Class} | {Method} | {UserEmail} | User can't register like a Person user | {CorrelationId}",
+                CLASSNAME, nameof(RegisterAsync), request.Email, _requestInfo.CorrelationId);
+
+            return Result<AuthResponse>.Failure("User don't has registers.");
+        }
+        
         var exists = await _context.Users
+            .Include(u => u.Person)
             .AnyAsync(u => u.Email == request.Email, cancellationToken);
 
         if (exists)
@@ -131,17 +151,19 @@ public class AuthenticationService : IAuthenticationService
             return Result<AuthResponse>.Failure("User already exists.");
         }
         
-        Guid.TryParse(request.PersonId, out Guid personId);
         var user = new User()
         {
-            PersonId = personId,
             Email = request.Email,
             Password = HashPassword(request.Email, request.Password),
-            Role = request.Role,
-            Status = request.Status,
+            Role = ERole.Person,
+            Status = EStatus.Active,
         };
 
         _context.Users.Add(user);
+        await _context.SaveChangesAsync(cancellationToken);
+        
+        person.UserId = user.Id;
+        _context.Update(person);
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(

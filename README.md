@@ -112,21 +112,13 @@ A solução foi pensada para permitir evolução gradual, aplicando conceitos co
 
 ### 📊 Diagrama ER
 
-![Diagrama ER Database](https://raw.githubusercontent.com/davypaulino/vaccine/cfe903877fa9f26b758b5ee63c64f694e1a896b2/docs/er-diagram.svg)
-
----
-
-### 🧩 Diagrama como código
-
-<details>
-<summary>Visualizar diagram as code</summary>
-
 ```mermaid
 erDiagram
     PERSON {
         UUID id PK
         string name
         string document
+        UUID UserId FK
         date birth_date
         datetime created_at
         UUID created_by
@@ -136,7 +128,6 @@ erDiagram
 
     USER {
         UUID id PK
-        UUID person_id FK
         string email
         string password
         int role
@@ -179,9 +170,6 @@ erDiagram
     VACCINE ||--|{ VACCINATION : used_in
     VACCINATION ||--o{ DOSE : contains
 ```
-
-</details>
-
 ---
 
 ## 🧭 Próximos passos

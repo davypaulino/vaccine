@@ -26,6 +26,8 @@ public static class ApplicationServicesConfiguration
     {
         builder.Services.AddScoped<IValidator<CreateVaccineRequest>, CreateVaccineRequestValidator>();
         builder.Services.AddScoped<IValidator<ModifyVaccineRequest>, ModifyVaccineRequestValidator>();
+        builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
+        builder.Services.AddScoped<IValidator<AuthenticateRequest>, AuthenticateRequestValidator>();
 
         return builder;
     }

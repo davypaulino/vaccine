@@ -90,7 +90,6 @@ public class VaccineApiFactory(InfraFixture infraFixture) : WebApplicationFactor
             expires: expires,
             signingCredentials: creds
         );
-
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

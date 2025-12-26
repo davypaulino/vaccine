@@ -1,0 +1,13 @@
+using vaccine.Data.Entities;
+using vaccine.Endpoints.DTOs.Validators;
+
+namespace vaccine.Domain.Entities;
+
+public class Person : BaseEntity
+{
+    public string Name { get; set; }
+    public Guid? UserId { get; set; }
+    public Cpf Document { get; set; }
+    public DateTime Birthday { get; set; }
+    public User? User { get; set; }
+}
