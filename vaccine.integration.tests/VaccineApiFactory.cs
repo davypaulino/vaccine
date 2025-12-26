@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using vaccine.Data;
+using vaccine.Domain;
 using vaccine.integration.tests.Fixtures;
 
 namespace vaccine.integration.tests;
@@ -38,17 +39,17 @@ public class VaccineApiFactory(InfraFixture infraFixture) : WebApplicationFactor
         builder.ConfigureServices((context, services) =>
         {
             var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<VaccineDBContext>));
+                d => d.ServiceType == typeof(DbContextOptions<VaccineDbContext>));
 
             if (descriptor is not null)
                 services.Remove(descriptor);
 
-            services.AddDbContext<VaccineDBContext>(options =>
+            services.AddDbContext<VaccineDbContext>(options =>
                 options.UseNpgsql(_dbFixture.VaccineConnectionString));
             
             var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<VaccineDBContext>();
+            var db = scope.ServiceProvider.GetRequiredService<VaccineDbContext>();
             db.Database.Migrate();
         });
     }

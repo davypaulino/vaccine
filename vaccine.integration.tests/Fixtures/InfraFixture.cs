@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using vaccine.integration.tests.Helpers;
 using vaccine.Data;
+using vaccine.Domain;
 
 namespace vaccine.integration.tests.Fixtures;
 
@@ -20,11 +21,11 @@ public class InfraFixture : IAsyncLifetime
 
     private async Task ApplyMigrationsAsync()
     {
-        var options = new DbContextOptionsBuilder<VaccineDBContext>()
+        var options = new DbContextOptionsBuilder<VaccineDbContext>()
             .UseNpgsql(Database.VaccineConnectionString)
             .Options;
 
-        using var context = new VaccineDBContext(options);
+        using var context = new VaccineDbContext(options);
         await context.Database.MigrateAsync();
     }
     

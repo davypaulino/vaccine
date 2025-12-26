@@ -2,10 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using vaccine.Data;
 using vaccine.Data.Entities;
-using vaccine.Data.Enums;
+using vaccine.Domain;
+using vaccine.Domain.Entities;
+using vaccine.Domain.Enums;
 using vaccine.Endpoints.DTOs.Requests;
 using vaccine.Endpoints.DTOs.Responses;
 using vaccine.integration.tests.Colletctions;
@@ -30,7 +33,8 @@ public class VaccineEndpointTests
     {
         // Arrange
         using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<VaccineDBContext>();
+        var context = scope.ServiceProvider.GetRequiredService<VaccineDbContext>();
+        await context.Vaccines.AddRangeAsync(context.Vaccines!);
         var client = _factory.CreateClient();
         
         var request =
@@ -126,7 +130,8 @@ public class VaccineEndpointTests
     {
         // Arrange
         using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<VaccineDBContext>();
+        var context = scope.ServiceProvider.GetRequiredService<VaccineDbContext>();
+        await context.Vaccines.AddRangeAsync(context.Vaccines!);
         var client = _factory.CreateClient();
 
         var request = new CreateVaccineRequest(
@@ -156,9 +161,11 @@ public class VaccineEndpointTests
     public async Task PutVaccine_WithValidRequest_ShouldUpdateVaccine()
     {
         // Arrange
+        
         const string expectedName = "COVID-19 Updated";
         using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<VaccineDBContext>();
+        var context = scope.ServiceProvider.GetRequiredService<VaccineDbContext>();
+        await context.Vaccines.AddRangeAsync(context.Vaccines!);
         var client = _factory.CreateClient();
 
         var vaccine = new Vaccine(
@@ -179,7 +186,10 @@ public class VaccineEndpointTests
         // Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        var updatedVaccine = context.Vaccines.First(v => v.Id == vaccine.Id);
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyContext = verifyScope.ServiceProvider.GetRequiredService<VaccineDbContext>();
+
+        var updatedVaccine = await verifyContext.Vaccines.FirstOrDefaultAsync(v => v.Id == vaccine.Id);
 
         Assert.Equal(expectedName, updatedVaccine.Name);
         Assert.True(updatedVaccine.AvailableTypes.HasFlag(EDoseType.FirstReinforcement));
@@ -210,11 +220,7 @@ public class VaccineEndpointTests
         // Arrange
         var client = _factory.CreateClient();
 
-        var request = new
-        {
-            Name = "COVID-19",
-            AvailableEDoses = new[] { 999 }
-        };
+        var request = new ModifyVaccineRequest("COVID-19", [(EDoseType)999]);
 
         // Act
         var response = await client.PutAsJsonAsync($"{endpointPath}/{Guid.NewGuid()}", request);
@@ -226,7 +232,7 @@ public class VaccineEndpointTests
             .ReadFromJsonAsync<ValidationProblemDetails>();
 
         Assert.NotNull(problem);
-        Assert.True(problem!.Errors.ContainsKey("AvailableEDoses[0]"));
+        Assert.True(problem!.Errors.ContainsKey("AvailableDoses[0]"));
     }
 
     [Fact]
@@ -235,10 +241,7 @@ public class VaccineEndpointTests
         // Arrange
         var client = _factory.CreateClient();
 
-        var request = new CreateVaccineRequest(
-            "",
-            [EDoseType.First]
-        );
+        var request = new ModifyVaccineRequest("", [EDoseType.First]);
 
         // Act
         var response = await client.PutAsJsonAsync($"{endpointPath}/{Guid.NewGuid()}", request);
@@ -259,10 +262,7 @@ public class VaccineEndpointTests
         // Arrange
         var client = _factory.CreateClient();
 
-        var request = new CreateVaccineRequest(
-            "COVID-19",
-            Array.Empty<EDoseType>()
-        );
+        var request = new ModifyVaccineRequest("COVID-19", Array.Empty<EDoseType>());
 
         // Act
         var response = await client.PutAsJsonAsync($"{endpointPath}/{Guid.NewGuid()}", request);
@@ -274,6 +274,6 @@ public class VaccineEndpointTests
             .ReadFromJsonAsync<ValidationProblemDetails>();
 
         Assert.NotNull(problem);
-        Assert.True(problem!.Errors.ContainsKey("AvailableEDoses"));
+        Assert.True(problem!.Errors.ContainsKey("AvailableDoses"));
     }
 }

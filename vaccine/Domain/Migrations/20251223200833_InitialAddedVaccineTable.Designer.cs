@@ -6,12 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using vaccine.Data;
+using vaccine.Domain;
 
 #nullable disable
 
 namespace vaccine.Migrations
 {
-    [DbContext(typeof(VaccineDBContext))]
+    [DbContext(typeof(VaccineDbContext))]
     [Migration("20251223200833_InitialAddedVaccineTable")]
     partial class InitialAddedVaccineTable
     {

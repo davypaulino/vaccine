@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using vaccine.Application.Configurations;
 using vaccine.Application.Constants;
 using vaccine.Application.Filters;
-using vaccine.Data;
-using vaccine.Data.Entities;
-using vaccine.Data.Enums;
+using vaccine.Application.Helpers;
+using vaccine.Domain;
+using vaccine.Domain.Entities;
+using vaccine.Domain.Enums;
 using vaccine.Endpoints.DTOs.Requests;
 using vaccine.Endpoints.DTOs.Responses;
 
@@ -15,21 +15,24 @@ public class VaccineEndpointsLogger { }
 public static class VaccineEndpoints
 {
     private const string CLASSNAME = nameof(VaccineEndpoints);
-    private static readonly string[] Tags =
+    private static readonly string[] _tags =
     [
-        "vacinas"
+        ApiDocumentationConstants.ManagerVaccineTag.Name
     ];
 
     public static RouteGroupBuilder MapVaccineEndpoints(this IEndpointRouteBuilder app)
     {
         var apiVersion = 1;
-        var group = app.MapGroup($"/api/v{apiVersion}/vaccines");
+        var group = app
+            .MapGroup($"/api/v{apiVersion}/vaccines")
+            .WithTags(_tags)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .WithOrder(10);
 
         group.MapPost("/", CreateVaccine)
             .AddEndpointFilter<ValidationFilter<CreateVaccineRequest>>()
             .Produces<CreateVaccineResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status500InternalServerError)
             .WithSummary("Adiciona Vacina")
             .WithDescription($"""
                               **Responsável por adicionar nova vacina:**
@@ -42,8 +45,6 @@ public static class VaccineEndpoints
             .AddEndpointFilter<ValidationFilter<ModifyVaccineRequest>>()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status500InternalServerError)
             .WithSummary("Modificar Vacina")
             .WithDescription($"""
                               **Responsável por modificar:**
@@ -56,7 +57,7 @@ public static class VaccineEndpoints
 
     private static async Task<IResult> CreateVaccine(
         CreateVaccineRequest request,
-        VaccineDBContext context,
+        VaccineDbContext context,
         ILogger<VaccineEndpointsLogger> logger,
         IRequestInfo requestInfo,
         CancellationToken cancellationToken)
@@ -78,7 +79,7 @@ public static class VaccineEndpoints
     private static async Task<IResult> ModifyVaccine(
         Guid vaccineId,
         ModifyVaccineRequest request,
-        VaccineDBContext context,
+        VaccineDbContext context,
         ILogger<VaccineEndpointsLogger> logger,
         IRequestInfo requestInfo,
         CancellationToken cancellation)

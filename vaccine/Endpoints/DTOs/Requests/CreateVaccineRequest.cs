@@ -1,4 +1,4 @@
-using vaccine.Data.Enums;
+using vaccine.Domain.Enums;
 
 namespace vaccine.Endpoints.DTOs.Requests;
 

@@ -1,11 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using vaccine.Data.Enums;
+using vaccine.Domain.Enums;
 
-namespace vaccine.Data.Entities;
+namespace vaccine.Domain.Entities;
 
-public class Vaccine
+public class Vaccine : BaseEntity
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; }
 
     /// <summary>
@@ -22,11 +20,6 @@ public class Vaccine
     /// Applied doses must be stored as individual records in the DOSE entity.
     /// </summary>
     public EDoseType AvailableTypes { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public Guid CreatedBy { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public Guid? UpdatedBy { get; set; }
 
     public Vaccine()
     {}
