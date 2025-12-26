@@ -37,7 +37,7 @@ public static class VaccineEndpoints
         group.MapPost("/", CreateVaccine)
             .AddEndpointFilter<ValidationFilter<CreateVaccineRequest>>()
             .Produces<CreateVaccineResponse>(StatusCodes.Status201Created)
-            .WithMetadata(new AuthorizationAttributeAnnotation(ERole.Admin | ERole.Editor))
+            .WithMetadata(new AuthorizationAttributeAnnotation([ERole.Admin, ERole.Editor]))
             .WithSummary("Adiciona Vacina")
             .WithDescription($"""
                               **Responsável por adicionar nova vacina:**
@@ -49,7 +49,7 @@ public static class VaccineEndpoints
             .AddEndpointFilter<ValidationFilter<ModifyVaccineRequest>>()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .WithMetadata(new AuthorizationAttributeAnnotation(ERole.Admin | ERole.Editor))
+            .WithMetadata(new AuthorizationAttributeAnnotation([ERole.Admin, ERole.Editor]))
             .WithSummary("Modificar Vacina")
             .WithDescription($"""
                               **Responsável por modificar:**

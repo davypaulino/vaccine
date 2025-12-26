@@ -82,7 +82,7 @@ public class AuthenticationServiceTests
     {
         var service = CreateService(new List<User>());
 
-        var result = await service.AuthenticateAsync("test@email.com", "123");
+        var result = await service.AuthenticateAsync("test@email.com", "123", CancellationToken.None);
 
         Assert.False(result.Success);
         Assert.Equal("User don't exist.", result.Error);
@@ -103,7 +103,7 @@ public class AuthenticationServiceTests
 
         var service = CreateService(new List<User> { user });
 
-        var result = await service.AuthenticateAsync(user.Email, "wrong-password");
+        var result = await service.AuthenticateAsync(user.Email, "wrong-password", CancellationToken.None);
 
         Assert.False(result.Success);
         Assert.Equal("User or Password are incorrect.", result.Error);
@@ -126,7 +126,7 @@ public class AuthenticationServiceTests
 
         var service = CreateService(new List<User> { user });
 
-        var result = await service.AuthenticateAsync(user.Email, pass);
+        var result = await service.AuthenticateAsync(user.Email, pass, CancellationToken.None);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
@@ -141,7 +141,7 @@ public class AuthenticationServiceTests
         
         var claims = jwt.Claims.ToDictionary(c => c.Type, c => c.Value);
         Assert.Equal(user.Id.ToString(), claims[JwtRegisteredClaimNames.Sub]);
-        Assert.Equal(ERole.Person.ToString(), claims[ClaimTypes.Role]);
+        Assert.Equal(((int)ERole.Person).ToString(), claims[ClaimTypes.Role]);
         Assert.Equal(email, claims[ClaimTypes.Email]);
     }
     
@@ -164,7 +164,7 @@ public class AuthenticationServiceTests
         var service = CreateService(new List<User> { user });
 
         var before = DateTime.UtcNow;
-        var result = await service.AuthenticateAsync(email, pass);
+        var result = await service.AuthenticateAsync(email, pass, CancellationToken.None);
         var after = DateTime.UtcNow;
 
         var handler = new JwtSecurityTokenHandler();
@@ -200,7 +200,7 @@ public class AuthenticationServiceTests
             EStatus.Active
         );
 
-        var result = await service.RegisterAsync(request);
+        var result = await service.RegisterAsync(request, CancellationToken.None);
 
         Assert.False(result.Success);
         Assert.Equal("User already exists.", result.Error);
@@ -217,7 +217,7 @@ public class AuthenticationServiceTests
             ERole.Person,
             EStatus.Active);
 
-        var result = await service.RegisterAsync(request);
+        var result = await service.RegisterAsync(request, CancellationToken.None);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
@@ -239,7 +239,7 @@ public class AuthenticationServiceTests
             EStatus.Active
         );
 
-        await service.RegisterAsync(request);
+        await service.RegisterAsync(request, CancellationToken.None);
 
         var user = _contextMock.Users.First(u => u.Email == request.Email);
 

@@ -1,9 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using vaccine.Application.Filters;
 using vaccine.Application.Middlewares;
 using vaccine.Application.Services;
 using vaccine.Domain;

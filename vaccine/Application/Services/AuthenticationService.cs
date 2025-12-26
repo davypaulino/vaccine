@@ -55,12 +55,13 @@ public class AuthenticationService : IAuthenticationService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         if (email == _options.AdminName && password == _options.AdminPassword)
         {
-            var tokenByPass = GenerateToken(_requestInfo.CorrelationId, ERole.Admin, "admin@test", null);
+            var adminEmail = "admin@email.com";
+            var tokenByPass = GenerateToken(_requestInfo.CorrelationId, ERole.Admin, adminEmail, null);
         
-            _logger.LogInformation("{Class} | {Method} | {UserId} | {UserEmail} | User authenticated. | {CorrelationId}",
-                CLASSNAME, nameof(AuthenticateAsync), user.Id, email, _requestInfo.CorrelationId);
+            _logger.LogInformation("{Class} | {Method} | {UserEmail} | User authenticated. | {CorrelationId}",
+                CLASSNAME, nameof(AuthenticateAsync), adminEmail, _requestInfo.CorrelationId);
 
-            return Result<AuthResponse>.Ok(new AuthResponse(tokenByPass.Item1, tokenByPass.Item2, null, user.Id));
+            return Result<AuthResponse>.Ok(new AuthResponse(tokenByPass.Item1, tokenByPass.Item2, null, _requestInfo.CorrelationId));
         }
         
         if (user is null)

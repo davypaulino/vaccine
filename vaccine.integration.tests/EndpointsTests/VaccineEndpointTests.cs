@@ -1,11 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using vaccine.Data;
-using vaccine.Data.Entities;
 using vaccine.Domain;
 using vaccine.Domain.Entities;
 using vaccine.Domain.Enums;
