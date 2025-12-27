@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using vaccine.Application.Configurations;
+using vaccine.Application.Constants;
 
 namespace vaccine.Application.Middlewares;
 
@@ -31,8 +32,9 @@ public class RequestInfoMiddleware : IMiddleware
             string? userName = user.FindFirst(ClaimTypes.Name)?.Value;
             string? email = user.FindFirst(ClaimTypes.Email)?.Value;
             string? role = user.FindFirst(ClaimTypes.Role)?.Value;
+            string? personId = user.FindFirst(VaccineClaimTypes.PersonId)?.Value;
 
-            requestInfo.SetUserInfo(userId, userName, email, role);
+            requestInfo.SetUserInfo(userId, userName, email, role, personId);
         }
 
         requestInfo.SetIP(ip);

@@ -11,6 +11,8 @@ public interface IRequestInfo
     string? EmailAddress { get; }
     
     ERole? Role { get; }
+    
+    Guid? PersonId { get;  }
 
     string? IP { get; }
 
@@ -22,7 +24,8 @@ public interface IRequestInfo
         string? userId,
         string? name,
         string? email,
-        string role);
+        string role,
+        string? personId);
 
     void SetIP(string ip);
 

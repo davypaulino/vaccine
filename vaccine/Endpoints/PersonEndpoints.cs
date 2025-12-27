@@ -38,6 +38,7 @@ public static class PersonEndpoints
         group.MapPost("/", CreatePerson)
             .Produces<CreatePersonResponse>(StatusCodes.Status201Created)
             .AddEndpointFilter<ValidationFilter<CreatePersonRequest>>()
+            .WithMetadata(new AuthorizationAttributeAnnotation([ERole.Admin, ERole.Editor]))
             .WithSummary("Criar pessoa")
             .WithDescription("""
                              Cria um novo registo de pessoa no sistema.
@@ -50,6 +51,7 @@ public static class PersonEndpoints
 
         group.MapDelete("/{personId:guid}", DeletePerson)
             .Produces(StatusCodes.Status204NoContent)
+            .WithMetadata(new AuthorizationAttributeAnnotation([ERole.Admin, ERole.Editor]))
             .WithSummary("Deletar pessoa")
             .WithDescription("""
                              Remove uma pessoa do sistema.
@@ -61,12 +63,14 @@ public static class PersonEndpoints
 
         group.MapGet("/", GetPersonsPaged)
             .Produces<PagedResponse<PersonResponse>>(StatusCodes.Status200OK)
+            .WithMetadata(new AuthorizationAttributeAnnotation([ERole.Viewer, ERole.Admin, ERole.Editor]))
             .WithSummary("Listar pessoas (paginado)")
             .WithDescription("""
                              Retorna uma lista paginada de pessoas cadastradas no sistema.
                              """);
 
         group.MapGet("/{personId:guid}/vaccinations", GetPersonVaccinations)
+            .WithMetadata(new AuthorizationAttributeAnnotation([ERole.Person | ERole.Viewer | ERole.Admin, ERole.Editor]))
             .Produces<IEnumerable<VaccinationResponse>>(StatusCodes.Status200OK)
             .WithSummary("Listar vacinações de uma pessoa")
             .WithDescription("""
@@ -199,6 +203,23 @@ public static class PersonEndpoints
         IRequestInfo requestInfo,
         CancellationToken cancellationToken)
     {
+        if (requestInfo.Role == ERole.Person && (requestInfo.PersonId is null || requestInfo.PersonId != personId))
+        {
+            logger.LogWarning("{Class} | {Method} | {PersonId} | person not found | {CorrelationId}",
+                CLASSNAME, nameof(GetPersonVaccinations), personId, requestInfo.CorrelationId);
+
+            return Results.Problem(
+                type: ProblemDetailTypes.BadRequest,
+                title: "Don't had permission",
+                detail: $"Don't had permission to access Person with id '{personId}'.",
+                statusCode: StatusCodes.Status401Unauthorized,
+                extensions: new Dictionary<string, object?>
+                {
+                    ["personId"] = personId,
+                    ["correlationId"] = requestInfo.CorrelationId
+                });
+        }
+        
         var person = await context.Persons
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);

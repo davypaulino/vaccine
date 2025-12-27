@@ -19,5 +19,5 @@ public class Person : BaseEntity
     public Cpf Document { get; set; }
     public DateTime Birthday { get; set; }
     public User? User { get; set; }
-    public List<Vaccination> Vaccinations { get; set; }
+    public List<Vaccination> Vaccinations { get; set; } = new();
 }

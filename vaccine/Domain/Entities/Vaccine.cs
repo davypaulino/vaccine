@@ -20,7 +20,8 @@ public class Vaccine : BaseEntity
     /// Applied doses must be stored as individual records in the DOSE entity.
     /// </summary>
     public EDoseType AvailableTypes { get; set; }
-    public List<Vaccination> Vaccinations { get; set; }
+
+    public List<Vaccination> Vaccinations { get; set; } = new();
 
     public Vaccine()
     {}
