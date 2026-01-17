@@ -33,6 +33,7 @@ public static class PersonEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .RequireAuthorization()
             .WithOrder(13);
 
         group.MapPost("/", CreatePerson)

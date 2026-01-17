@@ -31,6 +31,7 @@ public static class VaccinationEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .RequireAuthorization()
             .WithOrder(12);
         
         group.MapPost("/", CreateVaccination)

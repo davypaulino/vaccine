@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using vaccine.Application.Configurations;
 using vaccine.Application.Constants;
@@ -23,21 +24,54 @@ public class ExceptionMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
-                "Unhandled exception. Path: {Path} | CorrelationId: {CorrelationId}",
-                context.Request.Path,
-                _requestInfo.CorrelationId
-            );
+            if (context.Response.HasStarted)
+                return;
 
-            await HandleExceptionAsync(context, ex);
+            switch (ex)
+            {
+                case BadHttpRequestException badRequest:
+                    _logger.LogWarning(badRequest,
+                        "Bad request. Path: {Path} | CorrelationId: {CorrelationId}",
+                        context.Request.Path,
+                        _requestInfo.CorrelationId
+                    );
+
+                    await WriteBadRequest(context, badRequest);
+                    break;
+
+                default:
+                    _logger.LogError(ex,
+                        "Unhandled exception. Path: {Path} | CorrelationId: {CorrelationId}",
+                        context.Request.Path,
+                        _requestInfo.CorrelationId
+                    );
+
+                    await WriteInternalServerError(context);
+                    break;
+            }
         }
     }
-
+    
     private Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
-        
-        var response =  new ProblemDetails
+
+        return exception switch
+        {
+            BadHttpRequestException badRequest =>
+                WriteBadRequest(context, badRequest),
+
+            _ =>
+                WriteInternalServerError(context)
+        };
+    }
+
+
+    private Task WriteInternalServerError(HttpContext context)
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+        var response = new ProblemDetails
         {
             Type = ProblemDetailTypes.InternalError,
             Title = "Internal Server Error",
@@ -47,4 +81,23 @@ public class ExceptionMiddleware : IMiddleware
 
         return context.Response.WriteAsJsonAsync(response);
     }
+    
+    private Task WriteBadRequest(HttpContext context, Exception exception)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+        var problem = new ProblemDetails
+        {
+            Type = ProblemDetailTypes.BadRequest,
+            Title = "Invalid request",
+            Status = StatusCodes.Status400BadRequest,
+            Detail = $"""
+                      The request body is invalid or malformed. 
+                      '{exception.Message}'."
+                      """
+        };
+
+        return context.Response.WriteAsJsonAsync(problem);
+    }
+
 }
