@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Extensions;
 using vaccine.Application.Configurations;
 using vaccine.Application.Constants;
 using vaccine.Application.Filters;
@@ -77,6 +78,8 @@ public static class VaccinationEndpoints
         if (!vaccineExists)
             return Results.NotFound($"Vaccine with id '{request.VaccineId}' not found.");
 
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        
         var vaccination = await context.Vaccinations
             .Include(v => v.Person) 
             .Include(v => v.Vaccine)
@@ -95,38 +98,67 @@ public static class VaccinationEndpoints
             await context.Vaccinations
                 .AddAsync(vaccination, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
+            
+            vaccination = await context.Vaccinations
+                .Include(v => v.Person) 
+                .Include(v => v.Vaccine)
+                .Include(v => v.Doses)
+                .FirstOrDefaultAsync(v => v.VaccineId == request.VaccineId && v.PersonId == request.PersonId, cancellationToken);
         }
+
+        var hasTheseDoseAvailable = request.Doses?
+            .All(d => vaccination.Vaccine.AvailableTypes.HasFlag(d.DoseType));
         
-        var vacc = await context.Vaccinations
-            .Include(v => v.Person) 
-            .Include(v => v.Vaccine)
-            .Include(v => v.Doses)
-            .FirstOrDefaultAsync(v => v.VaccineId == request.VaccineId && v.PersonId == request.PersonId, cancellationToken);
-        
-        var canAdd = request.Doses?
-            .All(d =>
-                vacc.Vaccine.AvailableTypes
-                    .HasFlag(d.DoseType)) ?? true;
-         
-        if (canAdd is false)
+        if (hasTheseDoseAvailable is false)
         {
+            await transaction.RollbackAsync(cancellationToken);
+            
             return Results.Problem(
                 type: ProblemDetailTypes.BadRequest,
-                title: "Invalid dose",
+                title: "Invalid doses",
                 detail: $"Vaccine don't had this doses",
                 statusCode: StatusCodes.Status400BadRequest,
                 extensions: new Dictionary<string, object?>
                 {
-                    ["correlationId"] = requestInfo.CorrelationId
+                    ["correlationId"] = requestInfo.CorrelationId,
+                    ["vaccine"] = vaccination.Vaccine.Name,
+                    ["vaccineId"] = vaccination.Vaccine.Id,
+                    ["availableTypes"] = vaccination.Vaccine.AvailableTypes.ToString(),
                 });
         }
+        
+        var selectedDoses = request.Doses
+            .Aggregate(EDoseType.None, (acc, d) => acc | d.DoseType);
 
+        var hasTakenDoses = await context.Doses
+            .Where(d => d.VaccinationId == vaccination.Id && selectedDoses.HasFlag(d.DoseType))
+            .Select(d => d.DoseType.ToString())
+            .ToListAsync(cancellationToken);
+        
+        if (hasTakenDoses.Count > 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            
+            return Results.Problem(
+                type: ProblemDetailTypes.BadRequest,
+                title: "Doses of vaccines already taken",
+                detail: $"Remove doses already taken.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?>
+                {
+                    ["correlationId"] = requestInfo.CorrelationId,
+                    ["dosesTaken"] = hasTakenDoses
+                });
+        }
+        
         var newDoses = request.Doses
-            .Select(d => new Dose(vacc.Id, d.DoseType, d.AppliedAt))
+            .Select(d => new Dose(vaccination.Id, d.DoseType, d.AppliedAt.ToUniversalTime()))
             .ToHashSet();
         
         await context.AddRangeAsync(newDoses, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
+        
+        await transaction.CommitAsync(cancellationToken);
         
         logger.LogInformation("{Class} | {Method} | VaccinationId: {VaccinationId} | created | CorrelationId: {CorrelationId}",
             CLASSNAME, nameof(CreateVaccination), vaccination.Id, requestInfo.CorrelationId);

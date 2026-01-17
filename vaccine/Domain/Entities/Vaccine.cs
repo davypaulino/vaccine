@@ -45,4 +45,13 @@ public class Vaccine : BaseEntity
             AvailableTypes |= dose;
         }
     }
+
+    public IEnumerable<EDoseType> AvailableDoses()
+    {
+        return Enum.GetValues<EDoseType>()
+            .Where(v =>
+                v != EDoseType.None &&
+                (AvailableTypes & v) == v)
+            .ToList();
+    }
 }
