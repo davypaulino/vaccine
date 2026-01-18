@@ -56,6 +56,7 @@ artifacts/
 appsettings.*.json
 !appsettings.json
 !appsettings.Development.json
+!appsettings.Test.json
 
 ############################
 # Entity Framework
